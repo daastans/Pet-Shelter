@@ -55,6 +55,8 @@
 
     <!-- Label for dropdown menu option if the pet is male [CHAR LIMIT=20] -->
     <string name="gender_male">Male</string>
+    <string name="editor_insert_pet_failed">Failed to insert pet</string>
+    <string name="editor_insert_pet_successful">Sucessfully added new entry</string>
 
     <!-- Label for dropdown menu option if the pet is female [CHAR LIMIT=20] -->
     <string name="gender_female">Female</string>

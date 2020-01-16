@@ -15,23 +15,35 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.example.android.pets.data.PetContract.PetEntry;
+import com.example.android.pets.data.PetDbHelper;
+
+import android.widget.TextView;
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
 
+    private PetDbHelper mDbHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog);
+
 
         // Setup FAB to open EditorActivity
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -42,6 +54,53 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        mDbHelper=new PetDbHelper(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        displayDatabaseInfo();
+    }
+
+
+    private void displayDatabaseInfo(){
+        Log.i("LOG_TAG","cntrol reached here");
+
+        SQLiteDatabase db=mDbHelper.getReadableDatabase();
+
+        String columnNames[]={PetEntry._ID,PetEntry.COLUMN_PET_NAME};
+        String whereClause=PetEntry.COLUMN_PET_WEIGHT+"<=?";
+        String whereArgs[]={"40"};
+
+
+        Cursor cursor=getContentResolver().query(PetEntry.CONTENT_URI,null,null,null,null);
+        cursor.moveToFirst();
+
+        int nameIndex=cursor.getColumnIndex(PetEntry.COLUMN_PET_NAME);
+        int genderIndex=cursor.getColumnIndex(PetEntry.COLUMN_PET_GENDER);
+        int weightIndex=cursor.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT);
+        int idIndex=cursor.getColumnIndex(PetEntry._ID);
+        int breedIndex=cursor.getColumnIndex(PetEntry.COLUMN_PET_BREED);
+
+        StringBuilder stringBuilder=new StringBuilder();
+
+        for (int i=0;i<cursor.getCount();i++){
+            cursor.moveToPosition(i);
+            stringBuilder.append(cursor.getString(idIndex)+" "+cursor.getString(nameIndex)+" "+cursor.getString(breedIndex)+" "+cursor.getString(weightIndex)+"\n");
+        }
+
+        Log.i("LOG_TAG",cursor.getColumnName(1));
+        try{
+            TextView displayView=(TextView)findViewById(R.id.text_view_pet);
+            displayView.setText("\"Number of rows in pets database table: \"" + cursor.getCount()+"\n"+stringBuilder.toString());
+
+
+            Log.i("LOG_TAG","cntrol reached here");
+        }
+        finally {
+            cursor.close();
+        }
     }
 
     @Override
@@ -52,6 +111,18 @@ public class CatalogActivity extends AppCompatActivity {
         return true;
     }
 
+    private void insertPet(){
+        SQLiteDatabase db=mDbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(PetEntry.COLUMN_PET_NAME, "Toto");
+        values.put(PetEntry.COLUMN_PET_BREED, "Terrier");
+        values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
+        values.put(PetEntry.COLUMN_PET_WEIGHT, 7);
+
+        long newRowId = db.insert(PetEntry.TABLE_NAME, null, values);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // User clicked on a menu option in the app bar overflow menu
@@ -59,6 +130,8 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 // Do nothing for now
+                insertPet();
+                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:

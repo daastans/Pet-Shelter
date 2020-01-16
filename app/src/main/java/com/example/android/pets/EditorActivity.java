@@ -15,6 +15,9 @@
  */
 package com.example.android.pets;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
@@ -26,8 +29,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
+import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetContract.PetEntry;
+import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Allows user to create a new pet or edit an existing one.
@@ -45,6 +51,7 @@ public class EditorActivity extends AppCompatActivity {
 
     /** EditText field to enter the pet's gender */
     private Spinner mGenderSpinner;
+
 
     /**
      * Gender of the pet. The possible valid values are in the PetContract.java file:
@@ -64,8 +71,41 @@ public class EditorActivity extends AppCompatActivity {
         mWeightEditText = (EditText) findViewById(R.id.edit_pet_weight);
         mGenderSpinner = (Spinner) findViewById(R.id.spinner_gender);
 
+
+
         setupSpinner();
     }
+
+    private void insertPet(){
+        String name=mNameEditText.getText().toString().trim();
+        String breed=mBreedEditText.getText().toString().trim();
+        int weight=Integer.parseInt(mWeightEditText.getText().toString().trim());
+        int gender=mGender;
+
+        ContentValues contentValues=new ContentValues();
+        contentValues.put(PetEntry.COLUMN_PET_NAME,name);
+        contentValues.put(PetEntry.COLUMN_PET_BREED,breed);
+        contentValues.put(PetEntry.COLUMN_PET_WEIGHT,weight);
+        contentValues.put(PetEntry.COLUMN_PET_GENDER,gender);
+
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, contentValues);
+
+        if (newUri == null) {
+            // If the new content URI is null, then there was an error with insertion.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_failed),
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            // Otherwise, the insertion was successful and we can display a toast.
+            Toast.makeText(this, getString(R.string.editor_insert_pet_successful),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+
+
+
+    }
+
+
 
     /**
      * Setup the dropdown spinner that allows the user to select the gender of the pet.
@@ -121,6 +161,9 @@ public class EditorActivity extends AppCompatActivity {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
                 // Do nothing for now
+                insertPet();
+                finish();
+
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
